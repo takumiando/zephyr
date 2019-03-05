@@ -362,7 +362,7 @@ static inline sa_family_t net_context_get_family(struct net_context *context)
 {
 	NET_ASSERT(context);
 
-	return ((context->flags & NET_CONTEXT_FAMILY) >> 3);
+	return AF_INET6;
 }
 
 /**
