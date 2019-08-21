@@ -23,6 +23,8 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: civetweb
       url-base: https://github.com/civetweb
+    - name: sv-scm
+      url-base: git://sv-scm.atmark.tech/git/hanada/zephyr-v2
 
   #
   # Please add items below based on alphabetical order
@@ -77,7 +79,8 @@ manifest:
       revision: 6e3316da412649f02d133231078427e452f65db6
       path: modules/lib/gui/lvgl
     - name: mbedtls
-      revision: 4bba3b845453033b7ac9ecabb6cf694d8c1381a1
+      remote: sv-scm
+      revision: 1b2a93a12de976e0d6d7632e9159334ebf5065ff
       path: modules/crypto/mbedtls
     - name: mcumgr
       revision: 84934959d2d1722a23b7e7e200191ae4a6f96168
@@ -95,7 +98,8 @@ manifest:
       revision: 9b591b289e1f37339bd038b5a1f0e6c8ad39c63a
       path: modules/lib/open-amp
     - name: openthread
-      revision: 0dbecf508e7a79aae8ed9631f1a63fc65478b213
+      remote: sv-scm
+      revision: 87f92e853217d166eaa4960d0236cfef9420bbfa
       path: modules/lib/openthread
     - name: segger
       revision: 6fcf61606d6012d2c44129edc033f59331e268bc
