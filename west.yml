@@ -99,7 +99,7 @@ manifest:
       path: modules/lib/open-amp
     - name: openthread
       remote: sv-scm
-      revision: 87f92e853217d166eaa4960d0236cfef9420bbfa
+      revision: c4c767ae521c214a3279fb10b01d733abc85b7f0
       path: modules/lib/openthread
     - name: segger
       revision: 6fcf61606d6012d2c44129edc033f59331e268bc
