@@ -64,7 +64,7 @@ static struct net_linkaddr *ll_addr;
 
 static struct net_mgmt_event_callback ip6_addr_cb;
 
-static struct k_work join_success_handler_work;
+static struct k_delayed_work join_success_handler_work;
 
 static void ipv6_addr_event_handler(struct net_mgmt_event_callback *cb,
 				    u32_t mgmt_event, struct net_if *iface)
@@ -209,9 +209,9 @@ void ot_joiner_start_handler(otError error, void *context)
 	case OT_ERROR_NONE:
 		NET_INFO("Join success");
 		otThreadSetEnabled(ot_context->instance, true);
-		k_work_init(&join_success_handler_work,
+		k_delayed_work_init(&join_success_handler_work,
 			openthread_join_success_handler);
-		k_work_submit(&join_success_handler_work);
+		k_delayed_work_submit(&join_success_handler_work, K_MSEC(10000));
 		break;
 	default:
 		NET_ERR("Join failed [%d]", error);
