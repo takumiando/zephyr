@@ -25,6 +25,8 @@ manifest:
       url-base: https://github.com/civetweb
     - name: sv-scm
       url-base: git://sv-scm.atmark.tech/git/hanada/zephyr-v2
+    - name: takumiando
+      url-base: https://github.com/takumiando
 
   #
   # Please add items below based on alphabetical order
@@ -79,8 +81,8 @@ manifest:
       revision: 6e3316da412649f02d133231078427e452f65db6
       path: modules/lib/gui/lvgl
     - name: mbedtls
-      remote: sv-scm
-      revision: 1b2a93a12de976e0d6d7632e9159334ebf5065ff
+      remote: takumiando
+      revision: c6bd37502bbc616cbcf3a036496e0c7083fbf0ad
       path: modules/crypto/mbedtls
     - name: mcumgr
       revision: 84934959d2d1722a23b7e7e200191ae4a6f96168
