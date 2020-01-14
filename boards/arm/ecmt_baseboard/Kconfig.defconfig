@@ -1,0 +1,42 @@
+#
+# Copyright (c) 2020 Ecomott, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+if BOARD_ECMT_BASEBOARD
+
+config BOARD
+	default "ecmt_baseboard"
+
+if UART_CONSOLE
+
+config UART_1
+	default y
+
+endif # UART_CONSOLE
+
+if I2C
+
+config I2C_1
+	default y
+
+config I2C_2
+	default y
+
+config I2C_STM32_INTERRUPT
+	default y
+
+endif # I2C
+
+if ADC
+
+config ADC_1
+	default y
+
+endif # ADC
+
+config USE_STM32_HAL_PWR
+	default y
+
+endif # BOARD_ECMT_BASEBOARD

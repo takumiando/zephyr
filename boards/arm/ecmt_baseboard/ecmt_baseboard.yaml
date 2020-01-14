@@ -1,0 +1,13 @@
+identifier: ecmt_baseboard
+name: Ecomott Baseboard
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+ram: 80
+flash: 512
+supported:
+  - gpio
+  - i2c
+  - uart

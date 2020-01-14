@@ -1,0 +1,149 @@
+/*
+ * Copyright (c) 2020 Ecomott, Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <st/l1/stm32l152Xe.dtsi>
+
+/ {
+	model = "Ecomott Baseboard";
+	compatible = "st,stm32l152re-nucleo", "st,stm32l152";
+
+	chosen {
+		zephyr,console = &usart1;
+		zephyr,shell-uart = &usart1;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led_1: led_0 {
+			gpios = <&gpiob 12 GPIO_ACTIVE_LOW>;
+			label = "LED1";
+		};
+		led_2: led_1 {
+			gpios = <&gpioa 8 GPIO_ACTIVE_LOW>;
+			label = "LED2";
+		};
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+
+		/* Tact SW */
+		sw_1: sw_1 {
+			label = "SW1";
+			gpios = <&gpioc 6 GPIO_ACTIVE_LOW>;
+		};
+		sw_2: sw_2 {
+			label = "SW2";
+			gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
+		};
+
+		/* DIP SW */
+		sw_4_1: sw_4_1 {
+			label = "SW4 1";
+			gpios = <&gpioc 0 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+		sw_4_2: sw_4_2 {
+			label = "SW4 2";
+			gpios = <&gpioc 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+		sw_4_3: sw_4_3 {
+			label = "SW4 3";
+			gpios = <&gpioc 2 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+		sw_4_4: sw_4_4 {
+			label = "SW4 4";
+			gpios = <&gpioc 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+		sw_4_5: sw_4_5 {
+			label = "SW4 5";
+			gpios = <&gpioc 4 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+		sw_4_6: sw_4_6 {
+			label = "SW4 6";
+			gpios = <&gpioc 5 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+		sw_4_7: sw_4_7 {
+			label = "SW4 7";
+			gpios = <&gpiob 0 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+		sw_4_8: sw_4_8 {
+			label = "SW4 8";
+			gpios = <&gpiob 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	/* These aliases are provided for compatibility with samples */
+	aliases {
+		led0 = &led_1;
+		led1 = &led_2;
+
+		sw0 = &sw_1;
+		sw1 = &sw_2;
+
+		sw2 = &sw_4_1;
+		sw3 = &sw_4_2;
+		sw4 = &sw_4_3;
+		sw5 = &sw_4_4;
+		sw6 = &sw_4_5;
+		sw7 = &sw_4_6;
+		sw8 = &sw_4_7;
+		sw9 = &sw_4_8;
+
+		eeprom-0 = &eeprom;
+	};
+};
+
+&usart1 {
+	current-speed = <115200>;
+	status = "okay";
+};
+
+&usart2 {
+	current-speed = <115200>;
+	status = "okay";
+};
+
+&usart3 {
+	current-speed = <19200>;
+	status = "okay";
+};
+
+&eeprom {
+	status = "okay";
+};
+
+&i2c1 {
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	status = "okay";
+};
+
+&i2c2 {
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	status = "okay";
+
+	lis2dh12: lis2dh12@18 {
+		compatible = "st,lis2dh12", "st,lis2dh";
+		reg = <0x18>;
+		irq-gpios = <&gpiob 6 GPIO_ACTIVE_HIGH>;
+		label = "LIS2DH12-ACCEL";
+	};
+};
+
+&adc1 {
+	status = "okay";
+};
+
+&rtc {
+	status = "okay";
+};
+
+&iwdg {
+	status = "okay";
+};
