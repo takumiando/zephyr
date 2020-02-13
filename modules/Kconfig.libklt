@@ -1,0 +1,9 @@
+# Copyright (c) 2020 Ecomott, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+config LIBKLT
+	bool "KLT(Kanade–Lucas–Tomasi) Tracker Library Support"
+	depends on NEWLIB_LIBC
+	help
+	  This option enables the KLT Tracker library.
