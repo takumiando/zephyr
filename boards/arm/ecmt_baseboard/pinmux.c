@@ -13,11 +13,6 @@
 
 #include <pinmux/stm32/pinmux_stm32.h>
 
-#define GPIO_SW_CONTROLLER	DT_GPIO_STM32_GPIOB_LABEL
-#define GPIO_G_SENSOR_V_SW_PIN	(2)
-#define GPIO_SENSOR_V_SW_PIN	(5)
-#define GPIO_DIO_V_SW_PIN	(7)
-
 #define GPIO_LED_CONTROLLER	DT_ALIAS_LED1_GPIOS_CONTROLLER
 #define GPIO_LED_POWER_PIN	DT_ALIAS_LED1_GPIOS_PIN
 
@@ -52,19 +47,9 @@ static int pinmux_stm32_init(struct device *port)
 {
 	ARG_UNUSED(port);
 
-	struct device *gpiob = device_get_binding(GPIO_SW_CONTROLLER);
 	struct device *gpioa = device_get_binding(GPIO_LED_CONTROLLER);
 
 	stm32_setup_pins(pinconf, ARRAY_SIZE(pinconf));
-
-	gpio_pin_configure(gpiob, GPIO_G_SENSOR_V_SW_PIN, GPIO_OUTPUT);
-	gpio_pin_set(gpiob, GPIO_G_SENSOR_V_SW_PIN, 1);
-
-	gpio_pin_configure(gpiob, GPIO_SENSOR_V_SW_PIN, GPIO_OUTPUT);
-	gpio_pin_set(gpiob, GPIO_SENSOR_V_SW_PIN, 1);
-
-	gpio_pin_configure(gpiob, GPIO_DIO_V_SW_PIN, GPIO_OUTPUT);
-	gpio_pin_set(gpiob, GPIO_DIO_V_SW_PIN, 1);
 
 	gpio_pin_configure(gpioa, GPIO_LED_POWER_PIN, GPIO_OUTPUT);
 	gpio_pin_set(gpioa, GPIO_LED_POWER_PIN, 1);
