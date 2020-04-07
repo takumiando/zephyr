@@ -115,6 +115,11 @@
 	status = "okay";
 };
 
+&uart5 {
+	current-speed = <115200>;
+	status = "okay";
+};
+
 &eeprom {
 	status = "okay";
 };
