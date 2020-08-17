@@ -5,8 +5,8 @@ name: Doc build for Release or Daily
 
 # Either a daily based on schedule/cron or only on tag push
 on:
-  schedule:
-    - cron:  '50 22 * * *'
+#  schedule:
+#    - cron:  '50 22 * * *'
   push:
     tags:
     - '*'
