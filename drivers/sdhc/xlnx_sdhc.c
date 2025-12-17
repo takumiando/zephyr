@@ -1304,6 +1304,12 @@ static DEVICE_API(sdhc, xlnx_sdhc_api) = {
 	.get_host_props = xlnx_sdhc_host_props,
 };
 
+#if DT_NODE_HAS_STATUS_OKAY(DT_CHOSEN(zephyr_ocm))
+#define XLNX_SDHC_SDDATA_SECTION __attribute__((section(".ocm_data")))
+#else
+#define XLNX_SDHC_SDDATA_SECTION
+#endif
+
 #define XLNX_SDHC_INTR_CONFIG(n)                                                                  \
 	static void xlnx_sdhc_irq_handler##n(const struct device *dev)                            \
 	{                                                                                         \
@@ -1356,8 +1362,8 @@ static DEVICE_API(sdhc, xlnx_sdhc_api) = {
 		.hs200_mode = DT_INST_PROP_OR(n, mmc_hs200_1_8v, 0),                              \
 		.hs400_mode = DT_INST_PROP_OR(n, mmc_hs400_1_8v, 0),                              \
 	};                                                                                        \
-	static struct sd_data data##n;                                                            \
-	                                                                                          \
+	static struct sd_data data##n XLNX_SDHC_SDDATA_SECTION;                                   \
+                                                                                                  \
 	DEVICE_DT_INST_DEFINE(n, xlnx_sdhc_init, NULL, &data##n,                                  \
 			&xlnx_sdhc_inst_##n, POST_KERNEL,                                         \
 			CONFIG_KERNEL_INIT_PRIORITY_DEVICE, &xlnx_sdhc_api);
