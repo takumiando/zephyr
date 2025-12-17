@@ -25,4 +25,27 @@ config HOST_ADMA2_DESC_SIZE
 	help
 	  Set max number of descriptors supported
 
+config SDHC_XLNX_DMA_BOUNCE
+	bool "Enable OCM bounce buffer for Xilinx SDHC DMA"
+	default y
+	depends on DT_HAS_XLNX_VERSAL_OCM_ENABLED
+	help
+	  Enable DMA bounce buffering using OCM for Xilinx SDHC.
+	  If a buffer passed to the SDHC driver is outside the OCM range,
+	  a bounce buffer in OCM is used automatically.
+
+config SDHC_XLNX_BOUNCE_SIZE
+	int "Bounce buffer size (bytes)"
+	default 65536
+	depends on SDHC_XLNX_DMA_BOUNCE
+	help
+	  Set the size of the per-controller bounce buffer in OCM.
+	  Must be a multiple of 512 for SD/eMMC block transfers.
+	  Should be at least the maximum transfer size expected.
+
+config SDHC_XLNX_BOUNCE_WARN
+	bool "Warn when SDHC DMA buffer is outside OCM"
+	default y
+	depends on SDHC_XLNX_DMA_BOUNCE
+
 endif

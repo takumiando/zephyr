@@ -27,6 +27,42 @@ LOG_MODULE_REGISTER(xlnx_sdhc, CONFIG_SD_LOG_LEVEL);
 
 #define XLNX_SDHC_GET_HOST_PROP_BIT(cap, b) ((uint8_t)((cap & (CHECK_BITS(b))) >> b))
 
+#ifdef CONFIG_SDHC_XLNX_DMA_BOUNCE
+
+#define OCM_NODE  DT_CHOSEN(zephyr_ocm)
+#define OCM_START DT_REG_ADDR(OCM_NODE)
+#define OCM_SIZE  DT_REG_SIZE(OCM_NODE)
+
+#ifdef CONFIG_SDHC_XLNX_BOUNCE_WARN
+static atomic_t bounce_warned;
+#endif /* CONFIG_SDHC_XLNX_BOUNCE_WARN */
+
+/**
+ * @brief
+ * Check whether buffer lies within OCM region for DMA transfer
+ */
+static inline bool addr_dma_ok(const void *buf, size_t len)
+{
+	if (len == 0) {
+		return true;
+	}
+
+	uint32_t start = (uint32_t)OCM_START;
+	uint32_t size  = (uint32_t)OCM_SIZE;
+	uint32_t end   = start + size;
+
+	uint32_t a = (uint32_t)buf;
+	uint32_t b = a + len - 1;
+
+	/* Range [start, start+size) with wrap handling */
+	if (end > start) {
+		return (a >= start) && (b < end);
+	} else {
+		return (a >= start) || (b < end);
+	}
+}
+#endif /* CONFIG_SDHC_XLNX_DMA_BOUNCE */
+
 /**
  * @brief ADMA2 descriptor table structure.
  */
@@ -58,6 +94,12 @@ struct sd_data {
 	uint32_t maxclock;
 	/**< ADMA descriptor table */
 	adma2_descriptor adma2_descrtbl[MAX(1, CONFIG_HOST_ADMA2_DESC_SIZE)];
+
+#ifdef CONFIG_SDHC_XLNX_DMA_BOUNCE
+	/**< Bounce buffer for DMA transfer */
+	uint8_t bounce_buf[CONFIG_SDHC_XLNX_BOUNCE_SIZE] __aligned(CONFIG_SDHC_BUFFER_ALIGNMENT);
+	struct k_mutex bounce_lock;
+#endif /* CONFIG_SDHC_XLNX_DMA_BOUNCE */
 };
 
 /**
@@ -464,6 +506,13 @@ static int8_t xlnx_sdhc_transfer(const struct device *dev, struct sdhc_command *
 {
 	volatile struct reg_base *reg = (struct reg_base *)DEVICE_MMIO_GET(dev);
 	int8_t ret = -EINVAL;
+#ifdef CONFIG_SDHC_XLNX_DMA_BOUNCE
+	struct sd_data *dev_data = dev->data;
+	uint8_t *orig;
+	size_t len;
+	bool bounced = false;
+	bool is_write = false;
+#endif /* CONFIG_SDHC_XLNX_DMA_BOUNCE */
 
 	/* Check command line is in use */
 	if ((reg->present_state & 1U) != 0U) {
@@ -472,23 +521,79 @@ static int8_t xlnx_sdhc_transfer(const struct device *dev, struct sdhc_command *
 	}
 
 	if (data != NULL) {
+#ifdef CONFIG_SDHC_XLNX_DMA_BOUNCE
+		orig = data->data;
+		len = (size_t)data->block_size * (size_t)data->blocks;
+		/* If buffer is outside OCM, bounce into per-device OCM buffer */
+		if (!addr_dma_ok(orig, len)) {
+#ifdef CONFIG_SDHC_XLNX_BOUNCE_WARN
+			if (atomic_cas(&bounce_warned, 0, 1)) {
+				LOG_WRN("DMA buffer %p (%zu bytes) is outside OCM %#x (%u bytes), "
+					"bouncing",
+					orig, len,
+					(uint32_t)OCM_START,
+					(uint32_t)OCM_SIZE);
+			}
+#endif /* CONFIG_SDHC_XLNX_BOUNCE_WARN */
+
+			if (len > sizeof(dev_data->bounce_buf)) {
+				LOG_ERR("Bounce buffer too small (%u > %u)",
+					(unsigned)len, (unsigned)sizeof(dev_data->bounce_buf));
+				return -E2BIG;
+			}
+
+			k_mutex_lock(&dev_data->bounce_lock, K_FOREVER);
+
+			is_write = (cmd->opcode == SD_WRITE_SINGLE_BLOCK) ||
+				   (cmd->opcode == SD_WRITE_MULTIPLE_BLOCK);
+
+			if (is_write) {
+				memcpy(dev_data->bounce_buf, orig, len);
+			}
+			data->data = dev_data->bounce_buf;
+			bounced = true;
+		}
+#endif /* CONFIG_SDHC_XLNX_DMA_BOUNCE */
+
 		reg->block_size = data->block_size;
 		reg->block_count = data->blocks;
 
 		/* Setup ADMA2 if data is present */
 		ret = xlnx_sdhc_setup_adma(dev, data);
 		if (ret != 0) {
+#ifdef CONFIG_SDHC_XLNX_DMA_BOUNCE
+			if (bounced) {
+				data->data = orig;
+				k_mutex_unlock(&dev_data->bounce_lock);
+			}
+#endif /* CONFIG_SDHC_XLNX_DMA_BOUNCE */
 			return ret;
 		}
 
 		/* Send command and check for command complete */
 		ret = xlnx_sdhc_cmd(dev, cmd, true);
 		if (ret != 0) {
+#ifdef CONFIG_SDHC_XLNX_DMA_BOUNCE
+			if (bounced) {
+				data->data = orig;
+				k_mutex_unlock(&dev_data->bounce_lock);
+			}
+#endif /* CONFIG_SDHC_XLNX_DMA_BOUNCE */
 			return ret;
 		}
 
 		/* Check for data transfer complete */
 		ret = xlnx_sdhc_xfr(dev, data);
+#ifdef CONFIG_SDHC_XLNX_DMA_BOUNCE
+		if (bounced) {
+			if (!is_write) {
+				/* READ: copy back to original buffer */
+				memcpy((void *)orig, dev_data->bounce_buf, len);
+			}
+			data->data = orig;
+			k_mutex_unlock(&dev_data->bounce_lock);
+		}
+#endif /* CONFIG_SDHC_XLNX_DMA_BOUNCE */
 		if (ret != 0) {
 			return ret;
 		}
@@ -1281,6 +1386,10 @@ static int xlnx_sdhc_init(const struct device *dev)
 
 	DEVICE_MMIO_MAP(dev, K_MEM_CACHE_NONE);
 
+#ifdef CONFIG_SDHC_XLNX_DMA_BOUNCE
+	k_mutex_init(&dev_data->bounce_lock);
+#endif
+
 	if (device_is_ready(config->clock_dev) == 0) {
 		LOG_ERR("Clock control device not ready");
 		return -ENODEV;
@@ -1303,6 +1412,12 @@ static DEVICE_API(sdhc, xlnx_sdhc_api) = {
 	.card_busy = xlnx_sdhc_card_busy,
 	.get_host_props = xlnx_sdhc_host_props,
 };
+
+#ifdef CONFIG_SDHC_XLNX_DMA_BOUNCE
+#define XLNX_SDHC_SDDATA_SECTION __attribute__((section(".ocm_data")))
+#else
+#define XLNX_SDHC_SDDATA_SECTION
+#endif
 
 #define XLNX_SDHC_INTR_CONFIG(n)                                                                  \
 	static void xlnx_sdhc_irq_handler##n(const struct device *dev)                            \
@@ -1356,8 +1471,8 @@ static DEVICE_API(sdhc, xlnx_sdhc_api) = {
 		.hs200_mode = DT_INST_PROP_OR(n, mmc_hs200_1_8v, 0),                              \
 		.hs400_mode = DT_INST_PROP_OR(n, mmc_hs400_1_8v, 0),                              \
 	};                                                                                        \
-	static struct sd_data data##n;                                                            \
-	                                                                                          \
+	static struct sd_data data##n XLNX_SDHC_SDDATA_SECTION;                                   \
+                                                                                                  \
 	DEVICE_DT_INST_DEFINE(n, xlnx_sdhc_init, NULL, &data##n,                                  \
 			&xlnx_sdhc_inst_##n, POST_KERNEL,                                         \
 			CONFIG_KERNEL_INIT_PRIORITY_DEVICE, &xlnx_sdhc_api);
