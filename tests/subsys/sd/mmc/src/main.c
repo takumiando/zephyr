@@ -15,8 +15,8 @@
 #define BUF_SIZE     (SECTOR_SIZE * SECTOR_COUNT)
 static const struct device *const sdhc_dev = DEVICE_DT_GET(DT_ALIAS(sdhc0));
 static struct sd_card card;
-static uint8_t buf[BUF_SIZE] __aligned(CONFIG_SDHC_BUFFER_ALIGNMENT);
-static uint8_t check_buf[BUF_SIZE] __aligned(CONFIG_SDHC_BUFFER_ALIGNMENT);
+static uint8_t buf[BUF_SIZE] __aligned(CONFIG_SDHC_BUFFER_ALIGNMENT) __attribute__((section(".ocm_bss")));
+static uint8_t check_buf[BUF_SIZE] __aligned(CONFIG_SDHC_BUFFER_ALIGNMENT) __attribute__((section(".ocm_bss")));
 static uint32_t sector_size;
 static uint32_t sector_count;
 
