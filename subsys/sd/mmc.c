@@ -52,6 +52,16 @@
 
 LOG_MODULE_DECLARE(sd, CONFIG_SD_LOG_LEVEL);
 
+#if DT_NODE_HAS_STATUS_OKAY(DT_CHOSEN(zephyr_ocm))
+#define MMC_CARDBUF_SECTION __attribute__((section(".ocm_data")))
+#else
+#define MMC_CARDBUF_SECTION
+#endif
+
+static uint8_t card_buffer[CONFIG_SD_BUFFER_SIZE]
+		__aligned(MAX(4, CONFIG_SDHC_BUFFER_ALIGNMENT))
+		MMC_CARDBUF_SECTION;
+
 inline int mmc_write_blocks(struct sd_card *card, const uint8_t *wbuf, uint32_t start_block,
 			    uint32_t num_blocks)
 {
@@ -571,7 +581,7 @@ static int mmc_read_ext_csd(struct sd_card *card, struct mmc_ext_csd *card_ext_c
 
 	data.block_size = MMC_EXT_CSD_BYTES;
 	data.blocks = 1;
-	data.data = card->card_buffer;
+	data.data = card_buffer;
 	data.timeout_ms = CONFIG_SD_DATA_TIMEOUT;
 
 	ret = sdhc_request(card->sdhc, &cmd, &data);
@@ -580,6 +590,7 @@ static int mmc_read_ext_csd(struct sd_card *card, struct mmc_ext_csd *card_ext_c
 		return ret;
 	}
 
+	memcpy(card->card_buffer, card_buffer, sizeof(card_buffer));
 	mmc_decode_ext_csd(card_ext_csd, card->card_buffer);
 	card->block_count = card_ext_csd->sec_count;
 	card->block_size = SDMMC_DEFAULT_BLOCK_SIZE;
