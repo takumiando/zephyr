@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: Xilinx Versal OCM (On-Chip Memory)
+
+compatible: "xlnx,versal-ocm"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true

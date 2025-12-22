@@ -7,7 +7,7 @@
 / {
 	soc: soc {
 		ocm: memory@fffc0000 {
-			compatible = "zephyr,memory-region";
+			compatible = "zephyr,memory-region", "xlnx,versal-ocm";
 			reg = <0xfffc0000 DT_SIZE_K(256)>;
 			zephyr,memory-region = "OCM";
 			status = "disabled";
