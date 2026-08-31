@@ -14,6 +14,15 @@
 	};
 
 	soc: soc {
+		qspi: spi@f1030000 {
+			compatible = "xlnx,versal-qspi-1.0";
+			reg = <0xf1030000 DT_SIZE_K(4)>;
+			interrupts = <GIC_SPI 125 IRQ_TYPE_LEVEL IRQ_DEFAULT_PRIORITY>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
 		ocm: memory@fffc0000 {
 			compatible = "zephyr,memory-region";
 			reg = <0xfffc0000 DT_SIZE_K(256)>;
