@@ -12,11 +12,15 @@
 	model = "SC-OBC Module V1 Versal Cortex-R5F";
 
 	chosen {
-		zephyr,sram = &ocm;
-		zephyr,flash = &tcm;
+		zephyr,sram = &rpu_ddr;
 		zephyr,console = &uart1;
 		zephyr,shell-uart = &uart1;
 		zephyr,ocm = &ocm;
+	};
+
+	rpu_ddr: memory@10000000 {
+		compatible = "mmio-dram";
+		reg = <0x10000000 0x4000000>;
 	};
 };
 
